@@ -187,21 +187,13 @@ QQC2.Control {
         }
         Image {
             id: avatarImage
-            visible: false
+            visible: __private.showImage
 
             mipmap: true
             smooth: true
 
             fillMode: Image.PreserveAspectFit
             anchors.fill: parent
-        }
-        Kirigami.ShadowedTexture {
-            visible: __private.showImage
-
-            radius: width / 2
-            anchors.fill: parent
-
-            source: avatarImage
         }
 
         Rectangle {
@@ -239,30 +231,16 @@ QQC2.Control {
 
                 anchors.centerIn: parent
             }
+        }
 
-            Rectangle {
-                id: secondaryClip
-                clip: true
-                height: secondaryRect.height
-                width: secondaryRect.width
-                x: 0
-                y: 0
-                color: "transparent"
+        layer.enabled: true
+        layer.effect: OpacityMask {
+            maskSource: Rectangle {
+                height: avatarRoot.height
+                width: avatarRoot.width
+                radius: height / 2
+                color: "black"
                 visible: false
-
-                Rectangle {
-                    height: avatarRoot.background.height
-                    width: avatarRoot.background.width
-                    x: 0
-                    y: (secondaryClip.height) - height
-                    radius: width / 2
-                    color: "black"
-                }
-            }
-
-            layer.enabled: true
-            layer.effect: OpacityMask {
-                maskSource: secondaryClip
             }
         }
     }

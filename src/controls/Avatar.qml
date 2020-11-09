@@ -185,7 +185,7 @@ QQC2.Control {
             source: "user"
 
             anchors.fill: parent
-            anchors.margins: Kirigami.Units.smallSpacing
+            anchors.margins: Kirigami.Units.largeSpacing
 
             Kirigami.Theme.textColor: Kirigami.ColorUtils.brightnessForColor(__private.color) == Kirigami.ColorUtils.Light
                                     ? "black"

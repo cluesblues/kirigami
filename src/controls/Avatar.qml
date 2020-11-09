@@ -31,7 +31,8 @@ QQC2.Control {
     /**
     * The given name of a user.
     *
-    * The user's name will be used for generating initials.
+    * The user's name will be used for generating initials and to provide the
+    * accessible name for assistive technology.
     */
     property string name
 
@@ -95,6 +96,13 @@ QQC2.Control {
 
     implicitWidth: Kirigami.Units.iconSizes.large
     implicitHeight: Kirigami.Units.iconSizes.large
+
+    Accessible.role: !!actions.main ? Accessible.Button : Accessible.Graphic
+    Accessible.name: !!actions.main ? i18n("%1 — %2").arg(name).arg(actions.main.text) : name
+    Accessible.focusable: !!actions.main
+    Accessible.onPressAction: {
+        avatarRoot.actions.main.trigger()
+    }
 
     background: Rectangle {
         radius: parent.width / 2

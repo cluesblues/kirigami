@@ -170,7 +170,13 @@ QQC2.Control {
                 ? "black"
                 : "white"
 
-            anchors.centerIn: parent
+            anchors.fill: parent
+            font {
+                pointSize: -1
+                pixelSize: (avatarRoot.height - Kirigami.Units.largeSpacing) / 2
+            }
+            verticalAlignment: Text.AlignVCenter
+            horizontalAlignment: Text.AlignHCenter
         }
         Kirigami.Icon {
             visible: (avatarRoot.initialsMode == Kirigami.Avatar.InitialsMode.UseIcon && !__private.showImage) ||

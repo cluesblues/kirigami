@@ -197,6 +197,10 @@ QQC2.Control {
 
             mipmap: true
             smooth: true
+            sourceSize {
+                width: avatarRoot.width
+                height: avatarRoot.height
+            }
 
             fillMode: Image.PreserveAspectFit
             anchors.fill: parent

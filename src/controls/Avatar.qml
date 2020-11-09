@@ -7,7 +7,8 @@
 import QtQuick 2.5
 import org.kde.kirigami 2.13 as Kirigami
 import QtQuick.Controls 2.13 as QQC2
-import org.kde.kirigami.private 2.13
+import QtGraphicalEffects 1.0
+import org.kde.kirigami.private 2.14
 
 import "templates/private" as P
 
@@ -70,6 +71,17 @@ QQC2.Control {
     // We use a var instead of a color here to allow setting the colour
     // as undefined, which will result in a generated colour being used.
 
+    /**
+     * actions.main: Kirigami.Action
+     * actions.secondary: Kirigami.Action
+     *
+     * Actions associated with this avatar.
+     *
+     * Note that the secondary action should only be used for shortcuts of actions
+     * elsewhere in your application's UI, and cannot be accessed on mobile platforms.
+     */
+    property AvatarGroup actions: AvatarGroup {}
+
     property P.BorderPropertiesGroup border: P.BorderPropertiesGroup {
         width: 2
         color: Qt.rgba(0,0,0,0.2)
@@ -89,6 +101,45 @@ QQC2.Control {
         gradient: Gradient {
             GradientStop { position: 0.0; color: __private.color }
             GradientStop { position: 1.0; color: Kirigami.ColorUtils.scaleColor(__private.color, {lightness: -35.0}) }
+        }
+        MouseArea {
+            id: primaryMouse
+
+            anchors.fill: parent
+            hoverEnabled: true
+            property bool mouseInCircle: {
+                let x = avatarRoot.width / 2, y = avatarRoot.height / 2
+                let xPrime = mouseX, yPrime = mouseY
+
+                let distance = (x - xPrime) ** 2 + (y - yPrime) ** 2
+                let radiusSquared = (Math.min(avatarRoot.width, avatarRoot.height) / 2) ** 2
+
+                return distance < radiusSquared
+            }
+
+            onClicked: {
+                if (mouseY > avatarRoot.height - secondaryRect.height && !!avatarRoot.actions.secondary) {
+                    avatarRoot.actions.secondary.trigger()
+                    return
+                }
+                if (!!avatarRoot.actions.main) {
+                    avatarRoot.actions.main.trigger()
+                }
+            }
+
+            enabled: !!avatarRoot.actions.main || !!avatarRoot.actions.secondary
+            cursorShape: containsMouse && mouseInCircle && enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+
+            states: [
+                State {
+                    name: "secondaryRevealed"
+                    when: (!Kirigami.Settings.isMobile) && (!!avatarRoot.actions.secondary) && (primaryMouse.containsMouse && primaryMouse.mouseInCircle)
+                    PropertyChanges {
+                        target: secondaryRect
+                        visible: true
+                    }
+                }
+            ]
         }
     }
 
@@ -162,6 +213,56 @@ QQC2.Control {
             border {
                 width: avatarRoot.border.width
                 color: avatarRoot.border.color
+            }
+        }
+
+        Rectangle {
+            id: secondaryRect
+            visible: false
+
+            anchors {
+                bottom: parent.bottom
+                left: parent.left
+                right: parent.right
+            }
+
+            height: Kirigami.Units.iconSizes.small + Kirigami.Units.smallSpacing*2
+
+            color: Qt.rgba(0, 0, 0, 0.6)
+
+            Kirigami.Icon {
+                Kirigami.Theme.textColor: "white"
+                source: (avatarRoot.actions.secondary || {iconName: ""}).iconName
+
+                width: Kirigami.Units.iconSizes.small
+                height: Kirigami.Units.iconSizes.small
+
+                anchors.centerIn: parent
+            }
+
+            Rectangle {
+                id: secondaryClip
+                clip: true
+                height: secondaryRect.height
+                width: secondaryRect.width
+                x: 0
+                y: 0
+                color: "transparent"
+                visible: false
+
+                Rectangle {
+                    height: avatarRoot.background.height
+                    width: avatarRoot.background.width
+                    x: 0
+                    y: (secondaryClip.height) - height
+                    radius: width / 2
+                    color: "black"
+                }
+            }
+
+            layer.enabled: true
+            layer.effect: OpacityMask {
+                maskSource: secondaryClip
             }
         }
     }

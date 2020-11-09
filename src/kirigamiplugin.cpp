@@ -270,6 +270,7 @@ void KirigamiPlugin::registerTypes(const char *uri)
     qmlRegisterType<ToolBarLayout>(uri, 2, 14, "ToolBarLayout");
     qmlRegisterSingletonType<DisplayHint>(uri, 2, 14, "DisplayHint", [](QQmlEngine*, QJSEngine*) -> QObject* { return new DisplayHint; });
     qmlRegisterType<SizeGroup>(uri, 2, 14, "SizeGroup");
+    qmlRegisterType<AvatarGroup>("org.kde.kirigami.private", 2, 14, "AvatarGroup");
 
     qmlProtectModule(uri, 2);
 }

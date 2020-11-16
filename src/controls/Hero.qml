@@ -1,5 +1,6 @@
 /*
  *  SPDX-FileCopyrightText: 2020 Marco Martin <mart@kde.org>
+ *  SPDX-FileCopyrightText: 2020 Carson Black <uhhadd@gmail.com>
  *
  *  SPDX-License-Identifier: LGPL-2.0-or-later
  */
@@ -8,42 +9,141 @@ import QtQuick 2.14
 import QtQuick.Controls 2.4 as QQC2
 import org.kde.kirigami 2.13 as Kirigami
 
-//FIXME: QtObject
 Item {
     id: root
 
-    property Item source:Item{}
-    property Item destination:Item{}
+    /**
+     * source: Item
+     *
+     * The item to animate from in the hero animation.
+     */
+    property Item source
+
+    /**
+     * destination: Item
+     *
+     * The item to animate to in the hero animation.
+     */
+    property Item destination
+
+    /**
+     * mask: QtObject
+     *
+     * Group of properties related to the mask of the object when performing a hero animation.
+     * This contains the default mask as well as the properties required to create a custom mask.
+     */
+    readonly property QtObject mask: QtObject {
+        /**
+        * sourceProgress: real
+        *
+        * The progress of the animation, where 0 is the start and 1 is the end.
+        */
+        readonly property real sourceProgress: sourceEffect.progress
+        /**
+        * destinationProgress: real
+        *
+        * The progress of the animation, where 1 is the start and 0 is the end.
+        */
+        readonly property real destinationProgress: destinationEffect.progress
+
+        /**
+        * sourceHeight: real
+        *
+        * The height of the source item.
+        */
+        readonly property real sourceHeight: sourceEffect.height
+        /**
+        * sourceWidth: real
+        *
+        * The height of the source item.
+        */
+        readonly property real sourceWidth: sourceEffect.width
+
+        /**
+        * destinationWidth: real
+        *
+        * The width of the destination item.
+        */
+        readonly property real destinationWidth: destinationEffect.width
+
+        /**
+        * destinationHeight: real
+        *
+        * The height of the destination item.
+        */
+        readonly property real destinationHeight: destinationEffect.height
+
+        /**
+        * item: Item
+        *
+        * The item used to mask the hero during animation. This should bind to the
+        * sourceProgress and destinationProgress to change as the animation progresses.
+        */
+        property Item item: Rectangle {
+            visible: false
+            color: "white"
+
+            radius: (width/2) * mask.destinationProgress
+            width: (mask.sourceWidth * mask.sourceProgress) + (mask.destinationWidth * mask.destinationProgress)
+            height: (mask.sourceHeight * mask.sourceProgress) + (mask.destinationHeight * mask.destinationProgress)
+
+            layer.enabled: true
+            layer.smooth: true
+        }
+    }
+
+    property alias duration: sourceAni.duration
+    readonly property QtObject easing: QtObject {
+        property alias amplitude: sourceAni.easing.amplitude
+        property alias bezierCurve: sourceAni.easing.bezierCurve
+        property alias overshoot: sourceAni.easing.overshoot
+        property alias period: sourceAni.easing.period
+        property alias type: sourceAni.easing.type
+    }
 
     function open() {
-        openAnim.restart();
+        if (source != null && destination != null) {
+            heroAnimation.source = source
+            heroAnimation.destination = destination
+            heroAnimation.restart()
+        }
     }
     function close() {
-        closeAnim.restart();
+        if (source != null && destination != null) {
+            // doing a switcheroo simplifies the code
+            heroAnimation.source = destination
+            heroAnimation.destination = source
+            heroAnimation.restart()
+        }
     }
 
     SequentialAnimation {
-        id: openAnim
+        id: heroAnimation
+
+        property Item source
+        property Item destination
+
         ScriptAction {
             script: {
-                root.source.layer.enabled = true;
-                root.source.layer.smooth = true;
-                root.destination.layer.enabled = true;
-                root.destination.layer.smooth = true;
-                sourceEffect.visible = true;
-                destinationEffect.visible = true;
+                heroAnimation.source.layer.enabled = true
+                heroAnimation.source.layer.smooth = true
+                heroAnimation.destination.layer.enabled = true
+                heroAnimation.destination.layer.smooth = true
+                sourceEffect.visible = true
+                destinationEffect.visible = true
                 sourceEffect.source = null
-                sourceEffect.source = root.source
+                sourceEffect.source = heroAnimation.source
                 destinationEffect.source = null
-                destinationEffect.source = root.destination
-                root.source.opacity = 0
-                root.destination.opacity = 0
-                print("AAAAA"+root.source+root.destination+sourceEffect.parent)
-                sourceEffect.parent.visible = true;
+                destinationEffect.source = heroAnimation.destination
+                heroAnimation.source.opacity = 0
+                heroAnimation.destination.opacity = 0
+                sourceEffect.parent.visible = true
             }
         }
         ParallelAnimation {
             NumberAnimation {
+                id: sourceAni
+
                 target: sourceEffect
                 property: "progress"
                 from: 0
@@ -56,73 +156,55 @@ Item {
                 property: "progress"
                 from: 1
                 to: 0
-                duration: Kirigami.Units.longDuration
-                easing.type: Easing.InOutQuad
+                duration: root.duration
+                easing.amplitude: root.easing.amplitude
+                easing.bezierCurve: root.easing.bezierCurve
+                easing.overshoot: root.easing.overshoot
+                easing.period: root.easing.period
+                easing.type: root.easing.type
             }
         }
         ScriptAction {
             script: {
-                sourceEffect.visible = false;
-                destinationEffect.visible = false;
-                root.source.layer.enabled = false;
-                root.source.layer.smooth = false;
-                root.destination.layer.enabled = false;
-                root.destination.layer.smooth = false;
-                root.destination.opacity = 1
-                sourceEffect.parent.visible = false;
+                sourceEffect.visible = false
+                destinationEffect.visible = false
+                heroAnimation.source.layer.enabled = false
+                heroAnimation.source.layer.smooth = false
+                heroAnimation.destination.layer.enabled = false
+                heroAnimation.destination.layer.smooth = false
+                heroAnimation.destination.opacity = 1
+                sourceEffect.parent.visible = false
             }
         }
 
     }
-    SequentialAnimation {
-        id: closeAnim
-        ScriptAction {
-            script: {
-                root.source.layer.enabled = true;
-                root.source.layer.smooth = true;
-                root.destination.layer.enabled = true;
-                root.destination.layer.smooth = true;
-                sourceEffect.visible = true;
-                destinationEffect.visible = true;
-                sourceEffect.source = null
-                sourceEffect.source = root.source
-                destinationEffect.source = null
-                destinationEffect.source = root.destination
-                root.source.opacity = 0
-                root.destination.opacity = 0
-            }
-        }
-        ParallelAnimation {
-            NumberAnimation {
-                target: sourceEffect
-                property: "progress"
-                from: 1
-                to: 0
-                duration: Kirigami.Units.longDuration
-                easing.type: Easing.InOutQuad
-            }
-            NumberAnimation {
-                target: destinationEffect
-                property: "progress"
-                from: 0
-                to: 1
-                duration: Kirigami.Units.longDuration
-                easing.type: Easing.InOutQuad
-            }
-        }
-        ScriptAction {
-            script: {
-                sourceEffect.visible = false;
-                destinationEffect.visible = false;
-                root.source.layer.enabled = false;
-                root.source.layer.smooth = false;
-                root.destination.layer.enabled = false;
-                root.destination.layer.smooth = false;
-                root.source.opacity = 1
-            }
-        }
-    }
 
+    QtObject {
+        id: __privateShaderSources
+        readonly property string vertexShader: `
+uniform highp mat4 qt_Matrix;
+attribute highp vec4 qt_Vertex;
+attribute highp vec2 qt_MultiTexCoord0;
+varying highp vec2 qt_TexCoord0;
+uniform highp float startX;
+uniform highp float startY;
+uniform highp float targetX;
+uniform highp float targetY;
+uniform highp float scaleWidth;
+uniform highp float scaleHeight;
+uniform highp float progress;
+
+highp mat4 morph = mat4(1.0 + (scaleWidth - 1.0) * progress, 0.0, 0.0, startX*(1.0-progress) + targetX*progress,
+                        0.0, 1.0 + (scaleHeight - 1.0) * progress, 0.0, startY*(1.0-progress) + targetY*progress,
+                        0.0, 0.0, 1.0, 0.0,
+                        0.0, 0.0, 0.0, 1.0);
+
+void main() {
+    qt_TexCoord0 = qt_MultiTexCoord0;
+    gl_Position = qt_Matrix * qt_Vertex * morph;
+}
+        `
+    }
 
     ShaderEffect {
         id: sourceEffect
@@ -141,39 +223,18 @@ Item {
         property real targetY: 1-scaleHeight - (root.destination.Kirigami.ScenePosition.y * 2) / applicationWindow().height
         property real scaleWidth: root.destination.width/root.source.width
         property real scaleHeight: root.destination.height/root.source.height
-        vertexShader: "
-            uniform highp mat4 qt_Matrix;
-            attribute highp vec4 qt_Vertex;
-            attribute highp vec2 qt_MultiTexCoord0;
-            varying highp vec2 qt_TexCoord0;
-            uniform highp float startX;
-            uniform highp float startY;
-            uniform highp float targetX;
-            uniform highp float targetY;
-            uniform highp float scaleWidth;
-            uniform highp float scaleHeight;
-            uniform highp float progress;
-
-            highp mat4 morph = mat4(1.0 + (scaleWidth - 1.0) * progress, 0.0, 0.0, startX*(1.0-progress) + targetX*progress,
-                                    0.0, 1.0 + (scaleHeight - 1.0) * progress, 0.0, startY*(1.0-progress) + targetY*progress,
-                                    0.0, 0.0, 1.0, 0.0,
-                                    0.0, 0.0, 0.0, 1.0);
-
-            void main() {
-                qt_TexCoord0 = qt_MultiTexCoord0;
-                gl_Position = qt_Matrix * qt_Vertex * morph;
-            }"
-        fragmentShader: "
-            varying highp vec2 qt_TexCoord0;
-            uniform sampler2D source;
-            uniform lowp float qt_Opacity;
-            uniform lowp float progress;
-            void main() {
-                gl_FragColor = texture2D(source, qt_TexCoord0) * qt_Opacity * (1.0 - progress);
-            }"
+        vertexShader: __privateShaderSources.vertexShader
+        fragmentShader: `
+varying highp vec2 qt_TexCoord0;
+uniform sampler2D source;
+uniform lowp float qt_Opacity;
+uniform lowp float progress;
+void main() {
+    gl_FragColor = texture2D(source, qt_TexCoord0) * qt_Opacity * (1.0 - progress);
+}
+        `
     }
 
-    //TODO: deduplicate all this code
     ShaderEffect {
         id: destinationEffect
         x: 0
@@ -192,48 +253,18 @@ Item {
         property real scaleWidth: root.source.width/root.destination.width
         property real scaleHeight: root.source.height/root.destination.height
 
-        property variant maskSource: mask
-        //TODO: this should be user-customizable
-        Rectangle {
-            id: mask
-            visible: false
-            color: "white"
-            radius: (width/2) * destinationEffect.progress
-            width: (sourceEffect.width * sourceEffect.progress) +  (destinationEffect.width * destinationEffect.progress)
-            height: (sourceEffect.height * sourceEffect.progress) +  (destinationEffect.height * destinationEffect.progress)
-            layer.enabled: true
-            layer.smooth: true
-        }
-        vertexShader: "
-            uniform highp mat4 qt_Matrix;
-            attribute highp vec4 qt_Vertex;
-            attribute highp vec2 qt_MultiTexCoord0;
-            varying highp vec2 qt_TexCoord0;
-            uniform highp float startX;
-            uniform highp float startY;
-            uniform highp float targetX;
-            uniform highp float targetY;
-            uniform highp float scaleWidth;
-            uniform highp float scaleHeight;
-            uniform highp float progress;
+        property variant maskSource: root.mask.item
 
-            highp mat4 morph = mat4(1.0 + (scaleWidth - 1.0) * progress, 0.0, 0.0, startX*(1.0-progress) + targetX*progress,
-                                    0.0, 1.0 + (scaleHeight - 1.0) * progress, 0.0, startY*(1.0-progress) + targetY*progress,
-                                    0.0, 0.0, 1.0, 0.0,
-                                    0.0, 0.0, 0.0, 1.0);
-
-            void main() {
-                qt_TexCoord0 = qt_MultiTexCoord0;
-                gl_Position = qt_Matrix * qt_Vertex * morph;
-            }"
-        fragmentShader: "
-            varying highp vec2 qt_TexCoord0;
-            uniform sampler2D source;
-            uniform sampler2D maskSource;
-            uniform lowp float qt_Opacity;
-            uniform lowp float progress;
-            void main() {
-                gl_FragColor = texture2D(source, qt_TexCoord0) * texture2D(maskSource, qt_TexCoord0).a * qt_Opacity *  (1.0 - progress);
-            }"
+        vertexShader: __privateShaderSources.vertexShader
+        fragmentShader: `
+varying highp vec2 qt_TexCoord0;
+uniform sampler2D source;
+uniform sampler2D maskSource;
+uniform lowp float qt_Opacity;
+uniform lowp float progress;
+void main() {
+    gl_FragColor = texture2D(source, qt_TexCoord0) * texture2D(maskSource, qt_TexCoord0).a * qt_Opacity *  (1.0 - progress);
+}
+        `
     }
 }

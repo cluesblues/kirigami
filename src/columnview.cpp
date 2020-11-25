@@ -1249,6 +1249,7 @@ bool ColumnView::childMouseEventFilter(QQuickItem *item, QEvent *event)
             return false;
         }
         m_oldMouseX = m_startMouseX = mapFromItem(item, me->localPos()).x();
+        m_oldMouseY = m_startMouseY = mapFromItem(item, me->localPos()).y();
 
         m_mouseDown = true;
         me->setAccepted(false);
@@ -1267,10 +1268,9 @@ bool ColumnView::childMouseEventFilter(QQuickItem *item, QEvent *event)
             return false;
         }
 
-        if ((!keepMouseGrab() && item->keepMouseGrab()) || item->property("preventStealing").toBool()) {
-            m_contentItem->snapToItem();
-            return false;
-        }
+        const QPointF pos = mapFromItem(item, me->localPos());
+
+        bool verticalScrollIntercepted = false;
 
         QQuickItem *candidateItem = item;
         while (candidateItem->parentItem() && candidateItem->parentItem() != m_contentItem) {
@@ -1283,7 +1283,26 @@ bool ColumnView::childMouseEventFilter(QQuickItem *item, QEvent *event)
             }
         }
 
-        const QPointF pos = mapFromItem(item, me->localPos());
+        {
+            ColumnViewAttached *attached = qobject_cast<ColumnViewAttached *>(qmlAttachedPropertiesObject<ColumnView>(candidateItem, true));
+
+            ScrollIntentionEvent scrollIntentionEvent;// = new ScrollIntentionEvent;
+            scrollIntentionEvent.delta = QPointF(pos.x() - m_oldMouseX, pos.y() - m_oldMouseY);
+
+            Q_EMIT attached->scrollIntention(&scrollIntentionEvent);
+
+            if (scrollIntentionEvent.accepted) {
+                verticalScrollIntercepted = true;
+            }
+           // delete scrollIntentionEvent;
+        }
+
+        if ((!keepMouseGrab() && item->keepMouseGrab()) || item->property("preventStealing").toBool()) {
+            m_contentItem->snapToItem();
+            m_oldMouseX = pos.x();
+            m_oldMouseY = pos.y();
+            return verticalScrollIntercepted;
+        }
 
         const bool wasDragging = m_dragging;
         // If a drag happened, start to steal all events, use startDragDistance * 2 to give time to widgets to take the mouse grab by themselves
@@ -1301,10 +1320,12 @@ bool ColumnView::childMouseEventFilter(QQuickItem *item, QEvent *event)
 
         m_contentItem->m_lastDragDelta = pos.x() - m_oldMouseX;
         m_oldMouseX = pos.x();
+        m_oldMouseY = pos.y();
 
         setKeepMouseGrab(m_dragging);
         me->setAccepted(m_dragging);
-        return m_dragging;
+        qWarning()<<"BAH"<<m_dragging << verticalScrollIntercepted;
+        return m_dragging || verticalScrollIntercepted;
         break;
     }
     case QEvent::MouseButtonRelease: {

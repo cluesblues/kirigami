@@ -7,7 +7,7 @@
 import QtQuick 2.7
 import QtQuick.Layouts 1.2
 import "private"
-import org.kde.kirigami 2.4
+import org.kde.kirigami 2.14
 import QtQuick.Controls 2.4 as Controls
 
 /**
@@ -73,6 +73,14 @@ Item {
 
     opacity: height > 0 ? 1 : 0
 
+    onPageChanged: {
+        if (headerItem.oldPage) {print("AAAAAAAAAA"+headerItem.oldPage.ColumnView.scrollIntention.disconnect)
+            headerItem.oldPage.ColumnView.scrollIntention.disconnect(headerItem.scrollIntentHandler);
+        }
+        root.page.ColumnView.scrollIntention.connect(headerItem.scrollIntentHandler);
+        headerItem.oldPage = root.page;
+    }
+    //Component.onDestruction:print("$$$$"+
     NumberAnimation {
         id: heightAnim
         target: root
@@ -91,7 +99,6 @@ Item {
 
     Item {
         id: headerItem
-        property real computedRootHeight: root.preferredHeight
         anchors {
             left: parent.left
             right: parent.right
@@ -101,14 +108,47 @@ Item {
 
         height: __appWindow && __appWindow.reachableMode && __appWindow.reachableModeEnabled ? root.maximumHeight : (root.minimumHeight > 0 ? Math.max(root.height, root.minimumHeight) : root.preferredHeight)
 
-        //FIXME: see FIXME below
+        function scrollIntentHandler(event) {
+            print("££££"+root)
+            if (root.pageRow
+                && root.pageRow.globalToolBar.actualStyle !== ApplicationHeaderStyle.TabBar
+                && root.pageRow.globalToolBar.actualStyle != ApplicationHeaderStyle.Breadcrumb) {
+                return;
+            }
+            print(root)
+            root.implicitHeight = Math.max(0, Math.min(root.preferredHeight, root.implicitHeight + event.delta.y))
+            event.accepted = root.implicitHeight > 0 && root.implicitHeight < root.preferredHeight;
+            slideResetTimer.restart();
+            if (root.page.flickable && (root.page.flickable instanceof ListView) && root.page.flickable.verticalLayoutDirection === ListView.BottomToTop) {
+                root.page.flickable.contentY -= event.delta.y;
+            }
+        }
+
+        property Page oldPage
+
         Connections {
             target: root.page ? root.page.globalToolBarItem : null
-            enabled: headerSlideConnection.passive && target
+            enabled: target
             onImplicitHeightChanged: root.implicitHeight = root.page.globalToolBarItem.implicitHeight
         }
 
-        Connections {
+        Timer {
+            id: slideResetTimer
+            interval: 500
+            onTriggered: {
+                if ((root.pageRow ? root.pageRow.wideMode : (__appWindow && __appWindow.wideScreen)) || !Settings.isMobile) {
+                    return;
+                }
+                if (root.height > root.minimumHeight + (root.preferredHeight - root.minimumHeight)/2 ) {
+                    heightAnim.to = root.preferredHeight;
+                } else {
+                    heightAnim.to = root.minimumHeight;
+                }
+                heightAnim.from = root.implicitHeight
+                heightAnim.restart();
+            }
+        }
+        /*Connections {
             id: headerSlideConnection
             target: root.page ? root.page.flickable : null
             enabled: !passive
@@ -119,7 +159,7 @@ Item {
             //A better solution is needed
             readonly property bool passive: root.pageRow && parent.parent == root.pageRow && root.pageRow.globalToolBar.actualStyle !== ApplicationHeaderStyle.TabBar && root.pageRow.globalToolBar.actualStyle != ApplicationHeaderStyle.Breadcrumb
 
-            onContentYChanged: {
+            onContentYChanged: {return
                 if(root.page && root.page.flickable && root.page.flickable.contentHeight < root.page.height) {
                     return
                 }                
@@ -152,17 +192,12 @@ Item {
                 heightAnim.from = root.implicitHeight
                 heightAnim.restart();
             }
-        }
+        }*/
         Connections {
             target: pageRow
             onCurrentItemChanged: {
                 if (!root.page) {
                     return;
-                }
-                if (root.page.flickable) {
-                    headerSlideConnection.oldContentY = root.page.flickable.contentY;
-                } else {
-                    headerSlideConnection.oldContentY = 0;
                 }
 
                 root.implicitHeight = root.preferredHeight;

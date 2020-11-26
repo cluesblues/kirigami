@@ -152,51 +152,7 @@ Item {
                 heightAnim.restart();
             }
         }
-        /*Connections {
-            id: headerSlideConnection
-            target: root.page ? root.page.flickable : null
-            enabled: !passive
-            property real oldContentY
-            property bool updatingContentY: false
 
-            //FIXME HACK: if we are in global mode, meaning if we are the toolbar showing the global breadcrumb (but the pages are showing their own toolbar), not to try to mess with page contentY.
-            //A better solution is needed
-            readonly property bool passive: root.pageRow && parent.parent == root.pageRow && root.pageRow.globalToolBar.actualStyle !== ApplicationHeaderStyle.TabBar && root.pageRow.globalToolBar.actualStyle != ApplicationHeaderStyle.Breadcrumb
-
-            onContentYChanged: {return
-                if(root.page && root.page.flickable && root.page.flickable.contentHeight < root.page.height) {
-                    return
-                }                
-
-                if ((root.pageRow ? root.pageRow.wideMode : (__appWindow && __appWindow.wideScreen)) || !Settings.isMobile || root.page.flickable.atYBeginning) {
-                    root.implicitHeight = root.preferredHeight;
-                } else {
-                    var oldHeight = root.implicitHeight;
-
-                    root.implicitHeight = Math.max(root.minimumHeight,
-                                            Math.min(root.preferredHeight,
-                                                 root.implicitHeight + oldContentY - root.page.flickable.contentY));
-
-                    //if the implicitHeight is changed, use that to simulate scroll
-                    if (oldHeight === implicitHeight) {
-                        oldContentY = root.page.flickable.contentY;
-                    }
-                }
-            }
-
-            onMovementEnded: {
-                if ((root.pageRow ? root.pageRow.wideMode : (__appWindow && __appWindow.wideScreen)) || !Settings.isMobile) {
-                    return;
-                }
-                if (root.height > root.minimumHeight + (root.preferredHeight - root.minimumHeight)/2 ) {
-                    heightAnim.to = root.preferredHeight;
-                } else {
-                    heightAnim.to = root.minimumHeight;
-                }
-                heightAnim.from = root.implicitHeight
-                heightAnim.restart();
-            }
-        }*/
         Connections {
             target: pageRow
             onCurrentItemChanged: {

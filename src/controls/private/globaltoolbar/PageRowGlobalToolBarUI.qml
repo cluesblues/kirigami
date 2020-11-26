@@ -75,12 +75,14 @@ Kirigami.AbstractApplicationHeader {
             TemplatesPrivate.BackButton {
                 id: backButton
                 Layout.leftMargin: leftHandleAnchor.visible ? 0 : Kirigami.Units.smallSpacing
-                Layout.preferredWidth: height
-                Layout.maximumHeight: buttonsLayout.height
+                width: height
+                Layout.minimumHeight: buttonsLayout.height
+                Layout.preferredHeight: buttonsLayout.height
             }
             TemplatesPrivate.ForwardButton {
                 Layout.maximumHeight: buttonsLayout.height
-                Layout.preferredWidth: height
+                Layout.minimumHeight: buttonsLayout.height
+                width: height
             }
         }
 

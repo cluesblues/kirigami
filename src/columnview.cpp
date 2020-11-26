@@ -1286,7 +1286,7 @@ bool ColumnView::childMouseEventFilter(QQuickItem *item, QEvent *event)
         {
             ColumnViewAttached *attached = qobject_cast<ColumnViewAttached *>(qmlAttachedPropertiesObject<ColumnView>(candidateItem, true));
 
-            ScrollIntentionEvent scrollIntentionEvent;// = new ScrollIntentionEvent;
+            ScrollIntentionEvent scrollIntentionEvent;
             scrollIntentionEvent.delta = QPointF(pos.x() - m_oldMouseX, pos.y() - m_oldMouseY);
 
             Q_EMIT attached->scrollIntention(&scrollIntentionEvent);

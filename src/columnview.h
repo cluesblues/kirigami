@@ -15,7 +15,7 @@ class ColumnView;
 
 class ScrollIntentionEvent : public QObject {
     Q_OBJECT
-    Q_PROPERTY(QPointF delta MEMBER delta)
+    Q_PROPERTY(QPointF delta MEMBER delta CONSTANT)
     Q_PROPERTY(bool accepted MEMBER accepted)
 public:
     ScrollIntentionEvent(){}

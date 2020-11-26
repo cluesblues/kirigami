@@ -160,7 +160,10 @@ Item {
                     return;
                 }
 
-                root.implicitHeight = root.preferredHeight;
+                heightAnim.from = root.implicitHeight;
+                heightAnim.to = root.preferredHeight;
+
+                heightAnim.restart();
             }
         }
 

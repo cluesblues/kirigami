@@ -74,6 +74,7 @@ Item {
     opacity: height > 0 ? 1 : 0
 
     onPageChanged: {
+        // NOTE: The Connections object doesn't work with attached properties signals, so we have to do this by hand
         if (headerItem.oldPage) {
             headerItem.oldPage.ColumnView.scrollIntention.disconnect(headerItem.scrollIntentHandler);
         }

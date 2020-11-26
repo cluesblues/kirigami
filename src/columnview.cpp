@@ -1294,7 +1294,6 @@ bool ColumnView::childMouseEventFilter(QQuickItem *item, QEvent *event)
             if (scrollIntentionEvent.accepted) {
                 verticalScrollIntercepted = true;
             }
-           // delete scrollIntentionEvent;
         }
 
         if ((!keepMouseGrab() && item->keepMouseGrab()) || item->property("preventStealing").toBool()) {
@@ -1324,7 +1323,7 @@ bool ColumnView::childMouseEventFilter(QQuickItem *item, QEvent *event)
 
         setKeepMouseGrab(m_dragging);
         me->setAccepted(m_dragging);
-        qWarning()<<"BAH"<<m_dragging << verticalScrollIntercepted;
+
         return m_dragging || verticalScrollIntercepted;
         break;
     }

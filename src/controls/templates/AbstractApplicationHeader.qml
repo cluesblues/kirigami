@@ -74,13 +74,18 @@ Item {
     opacity: height > 0 ? 1 : 0
 
     onPageChanged: {
-        if (headerItem.oldPage) {print("AAAAAAAAAA"+headerItem.oldPage.ColumnView.scrollIntention.disconnect)
+        if (headerItem.oldPage) {
             headerItem.oldPage.ColumnView.scrollIntention.disconnect(headerItem.scrollIntentHandler);
         }
         root.page.ColumnView.scrollIntention.connect(headerItem.scrollIntentHandler);
         headerItem.oldPage = root.page;
     }
-    //Component.onDestruction:print("$$$$"+
+    Component.onDestruction: {
+        if (root.page) {
+            root.page.ColumnView.scrollIntention.disconnect(headerItem.scrollIntentHandler);
+        }
+    }
+
     NumberAnimation {
         id: heightAnim
         target: root
@@ -109,13 +114,12 @@ Item {
         height: __appWindow && __appWindow.reachableMode && __appWindow.reachableModeEnabled ? root.maximumHeight : (root.minimumHeight > 0 ? Math.max(root.height, root.minimumHeight) : root.preferredHeight)
 
         function scrollIntentHandler(event) {
-            print("££££"+root)
             if (root.pageRow
                 && root.pageRow.globalToolBar.actualStyle !== ApplicationHeaderStyle.TabBar
                 && root.pageRow.globalToolBar.actualStyle != ApplicationHeaderStyle.Breadcrumb) {
                 return;
             }
-            print(root)
+
             root.implicitHeight = Math.max(0, Math.min(root.preferredHeight, root.implicitHeight + event.delta.y))
             event.accepted = root.implicitHeight > 0 && root.implicitHeight < root.preferredHeight;
             slideResetTimer.restart();

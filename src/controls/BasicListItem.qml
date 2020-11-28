@@ -204,9 +204,9 @@ AbstractListItem {
         RowLayout {
             id: layout
             spacing: LayoutMirroring.enabled ? listItem.rightPadding : listItem.leftPadding
-            anchors.left: leadingLoader.right
+            anchors.left: contItem.left
             anchors.leftMargin: listItem.leadingPadding
-            anchors.right: trailingLoader.left
+            anchors.right: contItem.right
             anchors.rightMargin: listItem.trailingPadding
 
             Icon {
